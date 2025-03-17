@@ -164,6 +164,7 @@ main {
 }
 
 
+
   </style>
 
     </head>
@@ -173,9 +174,7 @@ main {
         <header>
           <h1 v-text="sitename"></h1>
           <div class="header-left">
-          <button class="checkout-btn" v-on:click="showCheckout">
-            {{cartItemCount}}
-            <span class="fas fa-cart-plus"></span> Checkout<br>
+          
           </button>
 
 
@@ -186,10 +185,9 @@ main {
             <div class="search-container">
             <span class="search-icon">&#128269;</span> <!--unicode magnifying in search bar-->
             <input type="text" id="search-bar" placeholder="Search......" v-model="searchQuery"> <!--Search bar-->
-            <button class="cart-icon">&#x1F6D2;</button> <!--unicode shopping cart-->
+            <button class="cart-icon" > {{cartItems.length}}  &#x1F6D2;</button> <!--unicode shopping cart--> <!--add to cart count-->
             </div>
             
-
             
           </header>
           <main>
@@ -200,6 +198,12 @@ main {
               <p>price:{{product.price}}</p>
               <p>available inventory : {{product.availableinventory}}</p>
           
+              <h1 v-text="sitename"></h1>
+          <div class="header-left">
+          <button v-on:click="addtocart(product)" >
+            Add to cart
+        
+          </button>
               </div>
             </main>
             </div>
@@ -361,17 +365,20 @@ main {
                 image:"basketball.png"
 
           }],
-              cartItemCount:0
+              cartItemCount:0,
+              cartItems:[]
               
             },
             methods: {
               showCheckout(){
                 alert('Checkout clicked!');
-              }
+              },
+              addtocart(item){
+                this.cartItems.push(item);
+                            }
             }
 
           });
           </script>
       </body>
       </html>
-    
