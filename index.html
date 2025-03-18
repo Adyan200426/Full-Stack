@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lora:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Styles remain unchanged -->
   <style>
     * {
       margin: 0;
@@ -394,7 +395,7 @@
         <div class="search-container">
           <span class="search-icon">🔍</span>
           <input type="text" id="search-bar" placeholder="Search Lessons..." v-model="searchQuery" @input="searchLessons">
-          <button class="cart-icon" :disabled="cartItems.length === 0" @click="toggleCart">{{cartItems.length}} 🛒</button>
+          <button class="cart-icon" :disabled="(cartItems.length === 0) && (showLessons)" @click="toggleCart">{{cartItems.length}} 🛒</button>
         </div>
       </div>
     </header>
@@ -425,21 +426,28 @@
     </main>
     <section v-else class="checkout">
       <h2>Shopping Cart</h2>
-      <p>Your Cart ({{cartItems.length}} items):</p>
-      <ul>
-        <li v-for="(item, index) in cartItems" :key="index">
-          {{item.subject}} - AED {{item.price}}
-          <button class="remove-btn" @click="removeFromCart(index)">Remove</button>
-        </li>
-      </ul>
-      <p class="total">Total Cost: AED {{totalCost}}</p>
-      <form @submit.prevent="proceedCheckout">
-        <label for="customer-name">Name:</label>
-        <input type="text" id="customer-name" v-model="customerName" placeholder="Enter your name" required>
-        <label for="customer-phone">Phone Number:</label>
-        <input type="tel" id="customer-phone" v-model="customerPhone" placeholder="Enter your phone number" required>
-        <button type="submit" class="proceed-btn" :disabled="!isCheckoutValid">Proceed</button>
-      </form>
+      <p v-if="cartItems.length > 0">Your Cart ({{cartItems.length}} items):</p>
+      <p v-else>Your cart is empty.</p>
+      <div v-if="cartItems.length > 0" class="products-container">
+        <div v-for="(item, index) in cartItems" :key="index" class="product">
+          <i class="fas fa-graduation-cap"></i>
+          <h2>{{item.subject}}</h2>
+          <p>Location: {{item.location}}</p>
+          <p>Price: AED {{item.price}}</p>
+          <p>Spaces: {{item.space}}</p>
+          <button class="add-to-cart-btn" @click="removeFromCart(index)">Remove from Cart</button>
+        </div>
+      </div>
+      <div v-if="cartItems.length > 0" class="checkout-details">
+        <p class="total">Total Cost: AED {{totalCost}}</p>
+        <form @submit.prevent="proceedCheckout">
+          <label for="customer-name">Name:</label>
+          <input type="text" id="customer-name" v-model="customerName" placeholder="Enter your name" required>
+          <label for="customer-phone">Phone Number:</label>
+          <input type="tel" id="customer-phone" v-model="customerPhone" placeholder="Enter your phone number" required>
+          <button type="submit" class="proceed-btn" :disabled="!isCheckoutValid">Proceed</button>
+        </form>
+      </div>
     </section>
   </div>
 
@@ -480,39 +488,25 @@
               lesson.space.toString().includes(this.searchQuery)
             );
           }
-       // Sort the filtered array
-return filtered.sort((itemA, itemB) => {
-    // Get the values to compare based on the sortBy property
-    let valueA = itemA[this.sortBy];
-    let valueB = itemB[this.sortBy];
-
-    // Convert strings to lowercase for case-insensitive comparison
-    if (typeof valueA === 'string') {
-        valueA = valueA.toLowerCase();
-    }
-    if (typeof valueB === 'string') {
-        valueB = valueB.toLowerCase();
-    }
-
-    // Compare values based on sort direction
-    if (this.sortOrder === 'asc') {
-        // For ascending order
-        if (valueA > valueB) return 1;
-        return -1;
-    } else {
-        // For descending order
-        if (valueA < valueB) return 1;
-        return -1;
-    }
-});
+          return filtered.sort((itemA, itemB) => {
+            let valueA = itemA[this.sortBy];
+            let valueB = itemB[this.sortBy];
+            if (typeof valueA === 'string') valueA = valueA.toLowerCase();
+            if (typeof valueB === 'string') valueB = valueB.toLowerCase();
+            if (this.sortOrder === 'asc') {
+              return valueA > valueB ? 1 : -1;
+            } else {
+              return valueA < valueB ? 1 : -1;
+            }
+          });
         },
         totalCost() {
           return this.cartItems.reduce((total, item) => total + item.price, 0);
         },
         isCheckoutValid() {
-          const nameRegex = /^[A-Za-z]+$/;
+          const nameRegex = /^[A-Za-z\s]+$/; // Allow spaces in name
           const phoneRegex = /^[0-9]+$/;
-          return nameRegex.test(this.customerName) && phoneRegex.test(this.customerPhone);
+          return this.cartItems.length > 0 && nameRegex.test(this.customerName) && phoneRegex.test(this.customerPhone);
         }
       },
       methods: {
@@ -520,14 +514,12 @@ return filtered.sort((itemA, itemB) => {
           if (lesson.space > 0) {
             this.cartItems.push({ ...lesson });
             lesson.space--;
-          
           }
         },
         removeFromCart(index) {
           const lesson = this.cartItems.splice(index, 1)[0];
           const originalLesson = this.lessons.find(l => l._id === lesson._id);
-          originalLesson.space++;
-          console.log('Removed from cart:', lesson.subject, 'Spaces restored:', originalLesson.space);
+          if (originalLesson) originalLesson.space++;
         },
         toggleCart() {
           this.showLessons = !this.showLessons;
